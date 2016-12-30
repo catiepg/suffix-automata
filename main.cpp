@@ -6,10 +6,11 @@ const int ALPHABET_SIZE = 26;
 
 struct Transition;
 
-// TODO: add finality of state.
+// TODO: check if final states are correct.
 struct State {
     Transition* next[ALPHABET_SIZE];
     State* suffixLink;
+    bool isFinal;
 
     State();
     int getTransition(State* state);
@@ -28,6 +29,7 @@ State::State() {
         this->next[i] = nullptr;
     }
     this->suffixLink = nullptr;
+    this->isFinal = false;
 }
 
 // TODO: retrieve state in linear time.
@@ -44,8 +46,10 @@ struct SuffixAutomata {
     State* source;
     int statesCount;
     int transitionsCount;
+    int finalStatesCount;
 
-    SuffixAutomata() : statesCount(0), transitionsCount(0) {}
+    SuffixAutomata() :
+        statesCount(0), transitionsCount(0), finalStatesCount(0) {}
 
     void build(std::string content);
     State* update(State* currentSink, char a);
@@ -55,8 +59,10 @@ struct SuffixAutomata {
 void SuffixAutomata::build(std::string word) {
     this->source = new State;
     State* currentSink = this->source;
-
     this->statesCount++;
+
+    currentSink->isFinal = true;
+    this->finalStatesCount++;
 
     for (int i = 0; i < word.length(); i++) {
         currentSink = this->update(currentSink, word[i]);
@@ -66,7 +72,10 @@ void SuffixAutomata::build(std::string word) {
 State* SuffixAutomata::update(State* currentSink, char a) {
     int index = a - FIRST_SYMBOL;
 
+    currentSink->isFinal = false;
+
     State* newSink = new State;
+    newSink->isFinal = true;
     this->statesCount++;
 
     Transition* primaryTransition = new Transition(newSink, true);
@@ -100,6 +109,14 @@ State* SuffixAutomata::split(State* parent, State* child, int a) {
     State* newChildState = new State;
     this->statesCount++;
 
+    newChildState->isFinal = true;
+    this->finalStatesCount++;
+
+    if (parent->isFinal) {
+        parent->isFinal = false;
+        this->finalStatesCount--;
+    }
+
     parent->next[a]->state = newChildState;
     parent->next[a]->primary = true;
 
@@ -132,7 +149,8 @@ int main() {
 
     automata->build("abcbc");
 
-    printf("states count: %d, transitions count: %d\n",
-            automata->statesCount, automata->transitionsCount);
+    printf("states count: %d, transitions count: %d, final count: %d\n",
+            automata->statesCount, automata->transitionsCount,
+            automata->finalStatesCount);
     return 0;
 }
