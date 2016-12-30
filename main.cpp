@@ -1,15 +1,19 @@
 #include <cstdio>
+#include <string>
 
 #include "automata.h"
 
-int main() {
-    SuffixAutomata* automata = new SuffixAutomata;
+int main(int argc, char *argv[]) {
+    SuffixAutomata* automata = new SuffixAutomata();
 
-    automata->build("abcbc");
+    std::string word = "abcbcab";
+    for (int i = 0; i < word.length(); i++) {
+        automata->add(word[i]);
+    }
 
-    printf("states count: %d, transitions count: %d, final count: %d\n",
-            automata->statesCount, automata->transitionsCount,
-            automata->finalStatesCount);
+    int finalStatesCount = automata->setFinalStates();
+    printf("states count: %d\ntransitions count: %d\nfinal count: %d\n",
+            automata->statesCount, automata->transitionsCount, finalStatesCount);
 
     return 0;
 }

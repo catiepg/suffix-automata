@@ -20,21 +20,21 @@ int State::getTransition(State* state) {
     return -1;
 }
 
-void SuffixAutomata::build(std::string word) {
+SuffixAutomata::SuffixAutomata() {
     this->source = new State;
-    State* currentSink = this->source;
-    this->statesCount++;
+    this->statesCount = 1;
 
-    currentSink->isFinal = true;
-    this->finalStatesCount++;
+    this->transitionsCount = 0;
 
-    for (int i = 0; i < word.length(); i++) {
-        currentSink = this->update(currentSink, word[i]);
-    }
+    this->sink = this->source;
 }
 
-State* SuffixAutomata::update(State* currentSink, char a) {
-    int index = a - FIRST_SYMBOL;
+void SuffixAutomata::add(char letter) {
+    this->sink = this->update(this->sink, letter);
+}
+
+State* SuffixAutomata::update(State* currentSink, char letter) {
+    int index = letter - FIRST_SYMBOL;
 
     currentSink->isFinal = false;
 
@@ -51,12 +51,6 @@ State* SuffixAutomata::update(State* currentSink, char a) {
 
     while (current != this->source && suffixState == nullptr) {
         current = current->suffixLink;
-
-        if (current->isFinal) {
-            current->isFinal = false;
-            this->finalStatesCount--;
-        }
-
         if (current->next[index] == nullptr) {
             Transition* secondaryTransition = new Transition(newSink);
             this->transitionsCount++;
@@ -70,11 +64,6 @@ State* SuffixAutomata::update(State* currentSink, char a) {
     }
 
     if (suffixState == nullptr) suffixState = this->source;
-
-    if (suffixState != this->source && !suffixState->isFinal) {
-        suffixState->isFinal = true;
-        this->finalStatesCount++;
-    }
 
     newSink->suffixLink = suffixState;
     return newSink;
@@ -109,4 +98,15 @@ State* SuffixAutomata::split(State* parent, State* child, int a) {
         }
     }
     return newChildState;
+}
+
+int SuffixAutomata::setFinalStates() {
+    int count = 0;
+    State* s = this->sink;
+    while (s != this->source) {
+        s->isFinal = true;
+        count++;
+        s = s->suffixLink;
+    }
+    return count;
 }
