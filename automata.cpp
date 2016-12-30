@@ -13,7 +13,7 @@ State::State() {
 // TODO: retrieve state in linear time.
 int State::getTransition(State* state) {
     for (int i = 0; i < ALPHABET_SIZE; i++) {
-        if (this->next[i]->state == state) {
+        if (this->next[i] != nullptr && this->next[i]->state == state) {
             return i;
         }
     }
