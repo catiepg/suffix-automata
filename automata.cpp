@@ -51,6 +51,12 @@ State* SuffixAutomata::update(State* currentSink, char a) {
 
     while (current != this->source && suffixState == nullptr) {
         current = current->suffixLink;
+
+        if (current->isFinal) {
+            current->isFinal = false;
+            this->finalStatesCount--;
+        }
+
         if (current->next[index] == nullptr) {
             Transition* secondaryTransition = new Transition(newSink);
             this->transitionsCount++;
@@ -65,6 +71,11 @@ State* SuffixAutomata::update(State* currentSink, char a) {
 
     if (suffixState == nullptr) suffixState = this->source;
 
+    if (suffixState != this->source && !suffixState->isFinal) {
+        suffixState->isFinal = true;
+        this->finalStatesCount++;
+    }
+
     newSink->suffixLink = suffixState;
     return newSink;
 }
@@ -72,14 +83,6 @@ State* SuffixAutomata::update(State* currentSink, char a) {
 State* SuffixAutomata::split(State* parent, State* child, int a) {
     State* newChildState = new State;
     this->statesCount++;
-
-    newChildState->isFinal = true;
-    this->finalStatesCount++;
-
-    if (parent->isFinal) {
-        parent->isFinal = false;
-        this->finalStatesCount--;
-    }
 
     parent->next[a]->state = newChildState;
     parent->next[a]->primary = true;

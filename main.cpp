@@ -10,5 +10,6 @@ int main() {
     printf("states count: %d, transitions count: %d, final count: %d\n",
             automata->statesCount, automata->transitionsCount,
             automata->finalStatesCount);
+
     return 0;
 }
