@@ -96,7 +96,9 @@ State* SuffixAutomata::split(State* parent, State* child, int a) {
 }
 
 int SuffixAutomata::setFinalStates() {
-    int count = 0;
+    this->source->isFinal = true;
+
+    int count = 1;
     State* s = this->sink;
     while (s != this->source) {
         s->isFinal = true;
