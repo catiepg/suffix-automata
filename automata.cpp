@@ -1,7 +1,5 @@
 #include "automata.h"
 
-// TODO: check if final states are correct.
-
 State::State() {
     for (int i = 0; i < ALPHABET_SIZE; i++) {
         this->next[i] = nullptr;
@@ -36,10 +34,7 @@ void SuffixAutomata::add(char letter) {
 State* SuffixAutomata::update(State* currentSink, char letter) {
     int index = letter - FIRST_SYMBOL;
 
-    currentSink->isFinal = false;
-
     State* newSink = new State;
-    newSink->isFinal = true;
     this->statesCount++;
 
     Transition* primaryTransition = new Transition(newSink, true);
