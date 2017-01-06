@@ -4,17 +4,22 @@
 #include <unordered_map>
 #include <vector>
 
+const unsigned int ALPHABET_SIZE = 26;
+const unsigned int FIRST_SYMBOL = 97;
+
 const int NONE = -1;
 
 struct Transition;
 
 struct State {
-    std::unordered_map<char, int> next;
-    std::unordered_map<char, bool> primary;
+    int next[ALPHABET_SIZE];
+    bool primary[ALPHABET_SIZE];
+
     int suffixLink;
     bool isFinal;
 
-    State() : suffixLink(NONE), isFinal(false) {}
+    // State() : suffixLink(NONE), isFinal(false) {}
+    State();
     void addTransition(char symbol, int state, bool primary);
     char getTransition(int state);
 };
@@ -30,8 +35,8 @@ struct SuffixAutomata {
     SuffixAutomata();
 
     void add(char letter);
-    int update(int currentSink, char a);
-    int split(int parent, int child, int a);
+    int update(int currentSink, char symbol);
+    int split(int parent, int child, int symbol);
     int setFinalStates();
 };
 

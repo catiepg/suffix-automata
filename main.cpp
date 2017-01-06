@@ -29,6 +29,7 @@ int main(int argc, char *argv[]) {
             if (count % 1000000 == 0) printf("characters added: %d\n", count);
         }
     } while (n > 0);
+    delete[] buffer;
 
     int finalStatesCount = automata->setFinalStates();
     printf("states count: %lu\ntransitions count: %d\nfinal count: %d\n",
