@@ -1,29 +1,13 @@
 #include "automata.h"
 
 State::State() {
-    for (int i = 0; i < ALPHABET_SIZE; i++) {
-        this->next[i] = nullptr;
-    }
-    this->suffixLink = nullptr;
+    this->suffixLink = NONE;
     this->isFinal = false;
 }
 
-// TODO: retrieve state in linear time.
-int State::getTransition(State* state) {
-    for (int i = 0; i < ALPHABET_SIZE; i++) {
-        if (this->next[i] != nullptr && this->next[i]->state == state) {
-            return i;
-        }
-    }
-    return -1;
-}
-
 SuffixAutomata::SuffixAutomata() {
-    this->source = new State;
-    this->statesCount = 1;
-
-    this->transitionsCount = 0;
-
+    this->source = 0;
+    this->states.emplace_back();
     this->sink = this->source;
 }
 
@@ -31,79 +15,88 @@ void SuffixAutomata::add(char letter) {
     this->sink = this->update(this->sink, letter);
 }
 
-State* SuffixAutomata::update(State* currentSink, char letter) {
-    int index = letter - FIRST_SYMBOL;
+int SuffixAutomata::update(int currentSink, char letter) {
+    int symbol = letter - FIRST_SYMBOL;
 
-    State* newSink = new State;
-    this->statesCount++;
+    int newSink = this->states.size();
+    this->states.emplace_back();
 
-    Transition* primaryTransition = new Transition(newSink, true);
-    currentSink->next[index] = primaryTransition;
-    this->transitionsCount++;
+    this->transitions.emplace_back(newSink, true);
+    this->states[currentSink].next[symbol] = this->transitions.size() - 1;
 
-    State* current = currentSink;
-    State* suffixState = nullptr;
+    int current = currentSink;
+    int suffix = NONE;
 
-    while (current != this->source && suffixState == nullptr) {
-        current = current->suffixLink;
-        if (current->next[index] == nullptr) {
-            Transition* secondaryTransition = new Transition(newSink);
-            this->transitionsCount++;
-            current->next[index] = secondaryTransition;
-        } else if (current->next[index]->primary) {
-            suffixState = current->next[index]->state;
+    while (current != this->source && suffix == NONE) {
+        current = this->states[current].suffixLink;
+        State currentState = this->states[current];
+        // ???
+        if (currentState.next.find(symbol) == currentState.next.end()) {
+            this->transitions.emplace_back(newSink, false);
+            this->states[current].next[symbol] = this->transitions.size() - 1;
+        } else if (this->transitions[currentState.next[symbol]].primary) {
+            suffix = this->transitions[currentState.next[symbol]].state;
         } else {
-            State* childState = current->next[index]->state;
-            suffixState = this->split(current, childState, index);
+            int child = this->transitions[currentState.next[symbol]].state;
+            suffix = this->split(current, child, symbol);
         }
     }
 
-    if (suffixState == nullptr) suffixState = this->source;
+    if (suffix == NONE) suffix = this->source;
 
-    newSink->suffixLink = suffixState;
+    this->states[newSink].suffixLink = suffix;
     return newSink;
 }
 
-State* SuffixAutomata::split(State* parent, State* child, int a) {
-    State* newChildState = new State;
-    this->statesCount++;
+int SuffixAutomata::split(int parent, int child, int symbol) {
+    int newChild = this->states.size();
+    this->states.emplace_back();
 
-    parent->next[a]->state = newChildState;
-    parent->next[a]->primary = true;
+    int t = this->states[parent].next[symbol];
+    this->transitions[t].state = newChild;
+    this->transitions[t].primary = true;
 
-    for (int i = 0; i < ALPHABET_SIZE; i++) {
-        if (child->next[i] != nullptr) {
-            Transition* t = new Transition(child->next[i]->state);
-            newChildState->next[i] = t;
-            this->transitionsCount++;
-        }
+    for (auto it : this->states[child].next) {
+        this->transitions.emplace_back(this->transitions[it.second].state, false);
+        this->states[newChild].next[it.first] = this->transitions.size() - 1;
     }
 
-    newChildState->suffixLink = child->suffixLink;
-    child->suffixLink = newChildState;
+    this->states[newChild].suffixLink = this->states[child].suffixLink;
+    this->states[child].suffixLink = newChild;
 
-    State* current = parent;
+    int current = parent;
     while (current != this->source) {
-        current = current->suffixLink;
-        int a = current->getTransition(child);
-        if (a > 0 && !current->next[a]->primary) {
-            current->next[a]->state = newChildState;
+        current = this->states[current].suffixLink;
+        char a = this->getTransition(current, child);
+        int t = this->states[current].next[a];
+        if (a > 0 && !this->transitions[t].primary) {
+            this->transitions[t].state = newChild;
         } else {
             break;
         }
     }
-    return newChildState;
+    return newChild;
 }
 
 int SuffixAutomata::setFinalStates() {
-    this->source->isFinal = true;
+    this->states[this->source].isFinal = true;
 
     int count = 1;
-    State* s = this->sink;
+    int s = this->sink;
     while (s != this->source) {
-        s->isFinal = true;
+        this->states[s].isFinal = true;
         count++;
-        s = s->suffixLink;
+        s = this->states[s].suffixLink;
     }
     return count;
+}
+
+// TODO: retrieve state in linear time.
+char SuffixAutomata::getTransition(int from, int to) {
+    for (auto it : this->states[from].next) {
+        if (this->transitions[it.second].state == to) {
+            return it.first;
+        }
+    }
+    return -1;
 }

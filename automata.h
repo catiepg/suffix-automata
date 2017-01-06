@@ -1,41 +1,45 @@
 #ifndef SUFFIX_AUTOMATA_H
 #define SUFFIX_AUTOMATA_H
 
+#include <unordered_map>
+#include <vector>
+
 const int FIRST_SYMBOL = 97;
 const int ALPHABET_SIZE = 26;
+
+const int NONE = -1;
 
 struct Transition;
 
 struct State {
-    Transition* next[ALPHABET_SIZE];
-    State* suffixLink;
+    std::unordered_map<char, int> next;
+    int suffixLink;
     bool isFinal;
 
     State();
-    int getTransition(State* state);
 };
 
 struct Transition {
-    State* state;
+    int state;
     bool primary;
 
-    Transition(State* s, bool p) : state(s), primary(p) {}
-    Transition(State* s) : Transition(s, false) {}
+    Transition(int s, bool p) : state(s), primary(p) {}
 };
 
 struct SuffixAutomata {
-    State* source;
-    State* sink;
+    std::vector<State> states;
+    std::vector<Transition> transitions;
 
-    int statesCount;
-    int transitionsCount;
+    int source;
+    int sink;
 
     SuffixAutomata();
 
     void add(char letter);
-    State* update(State* currentSink, char a);
-    State* split(State* parent, State* child, int a);
+    int update(int currentSink, char a);
+    int split(int parent, int child, int a);
     int setFinalStates();
+    char getTransition(int from, int to);
 };
 
 #endif
