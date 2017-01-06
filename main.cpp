@@ -31,8 +31,8 @@ int main(int argc, char *argv[]) {
     } while (n > 0);
 
     int finalStatesCount = automata->setFinalStates();
-    printf("states count: %lu\ntransitions count: %lu\nfinal count: %d\n",
-            automata->states.size(), automata->transitions.size(), finalStatesCount);
+    printf("states count: %lu\ntransitions count: %d\nfinal count: %d\n",
+            automata->states.size(), automata->transitionsCount, finalStatesCount);
 
     return 0;
 }
