@@ -1,35 +1,29 @@
 #ifndef SUFFIX_AUTOMATA_H
 #define SUFFIX_AUTOMATA_H
 
-#include <unordered_map>
 #include <vector>
+#include <bitset>
+
+#include "array.h"
 
 const unsigned int ALPHABET_SIZE = 26;
-const unsigned int FIRST_SYMBOL = 97;
+const unsigned int FIRST_LETTER = 97;
 
-const int NONE = -1;
-
-struct Transition;
+const int SOURCE = 0;
 
 struct State {
-    int next[ALPHABET_SIZE];
-    bool primary[ALPHABET_SIZE];
+    Array<int, NONE, ALPHABET_SIZE> next;
+    std::bitset<ALPHABET_SIZE> primary;
 
     int suffixLink;
     bool isFinal;
 
-    // State() : suffixLink(NONE), isFinal(false) {}
     State();
-    void addTransition(char symbol, int state, bool primary);
-    char getTransition(int state);
 };
 
 struct SuffixAutomata {
     std::vector<State> states;
-
     int transitionsCount;
-
-    int source;
     int sink;
 
     SuffixAutomata();
@@ -38,6 +32,10 @@ struct SuffixAutomata {
     int update(int currentSink, char symbol);
     int split(int parent, int child, int symbol);
     int setFinalStates();
+
+    void addTransition(int from, int index, int to, bool primary);
+
+    bool recognize(const char* suffix);
 };
 
 #endif
