@@ -4,7 +4,9 @@
 #include <vector>
 #include <bitset>
 
-#include "array.h"
+#include "intarray.h"
+
+const int NONE = -1;
 
 const unsigned int ALPHABET_SIZE = 26;
 const unsigned int FIRST_LETTER = 97;
@@ -12,13 +14,12 @@ const unsigned int FIRST_LETTER = 97;
 const int SOURCE = 0;
 
 struct State {
-    Array<int, NONE, ALPHABET_SIZE> next;
+    IntArray<ALPHABET_SIZE> next;
     std::bitset<ALPHABET_SIZE> primary;
 
     int suffixLink;
-    bool isFinal;
 
-    State();
+    State() : suffixLink(NONE) {}
 };
 
 struct SuffixAutomata {
@@ -29,13 +30,12 @@ struct SuffixAutomata {
     SuffixAutomata();
 
     void add(char letter);
-    int update(int currentSink, char symbol);
-    int split(int parent, int child, int symbol);
-    int setFinalStates();
+    int update(int currentSink, char letter);
+    int split(int parent, int child, int index);
+    int getFinalStates();
 
+    int addState();
     void addTransition(int from, int index, int to, bool primary);
-
-    bool recognize(const char* suffix);
 };
 
 #endif

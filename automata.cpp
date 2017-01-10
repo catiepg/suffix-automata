@@ -1,17 +1,4 @@
-#include <cstring>
-
 #include "automata.h"
-
-State::State() {
-    this->suffixLink = NONE;
-    this->isFinal = false;
-}
-
-void SuffixAutomata::addTransition(int from, int index, int to, bool primary) {
-    this->states[from].next[index] = to;
-    this->states[from].primary[index] = primary;
-    this->transitionsCount++;
-}
 
 SuffixAutomata::SuffixAutomata() {
     this->transitionsCount = 0;
@@ -26,9 +13,7 @@ void SuffixAutomata::add(char letter) {
 int SuffixAutomata::update(int currentSink, char letter) {
     int index = letter - FIRST_LETTER;
 
-    int newSink = this->states.size();
-    this->states.emplace_back();
-
+    int newSink = this->addState();
     this->addTransition(currentSink, index, newSink, true);
 
     int current = currentSink;
@@ -36,13 +21,12 @@ int SuffixAutomata::update(int currentSink, char letter) {
 
     while (current != SOURCE && suffix == NONE) {
         current = this->states[current].suffixLink;
-        State currentState = this->states[current];
-        if (currentState.next[index] == NONE) {
+        if (this->states[current].next[index] == NONE) {
             this->addTransition(current, index, newSink, false);
-        } else if (currentState.primary[index]) {
-            suffix = currentState.next[index];
+        } else if (this->states[current].primary[index]) {
+            suffix = this->states[current].next[index];
         } else {
-            int child = currentState.next[index];
+            int child = this->states[current].next[index];
             suffix = this->split(current, child, index);
         }
     }
@@ -54,8 +38,7 @@ int SuffixAutomata::update(int currentSink, char letter) {
 }
 
 int SuffixAutomata::split(int parent, int child, int index) {
-    int newChild = this->states.size();
-    this->states.emplace_back();
+    int newChild = this->addState();
 
     this->states[parent].next[index] = newChild;
     this->states[parent].primary[index] = true;
@@ -83,26 +66,26 @@ int SuffixAutomata::split(int parent, int child, int index) {
     return newChild;
 }
 
-int SuffixAutomata::setFinalStates() {
-    this->states[SOURCE].isFinal = true;
+int SuffixAutomata::getFinalStates() {
     int count = 1;
     int s = this->sink;
     while (s != SOURCE) {
-        this->states[s].isFinal = true;
         count++;
         s = this->states[s].suffixLink;
     }
     return count;
 }
 
-bool SuffixAutomata::recognize(const char* word) {
-    State currentState = this->states[SOURCE];
-    int len = std::strlen(word);
-    for (int i = 0; i < len; i++) {
-        int next = currentState.next[word[i] - FIRST_LETTER];
-        if (next == NONE) return false;
-        currentState = this->states[next];
+int SuffixAutomata::addState() {
+    this->states.emplace_back();
+    if (this->states.capacity() > 70000000 && this->states.size() % 100000 == 0) {
+        this->states.shrink_to_fit();
     }
-    if (currentState.isFinal) return true;
-    return false;
+    return this->states.size() - 1;
+}
+
+void SuffixAutomata::addTransition(int from, int index, int to, bool primary) {
+    this->states[from].next[index] = to;
+    this->states[from].primary[index] = primary;
+    this->transitionsCount++;
 }
