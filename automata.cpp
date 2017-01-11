@@ -1,12 +1,29 @@
 #include "automata.h"
 
-SuffixAutomata::SuffixAutomata() {
+SuffixAutomata::SuffixAutomata(int size) {
     this->transitionsCount = 0;
-    this->states.emplace_back();
     this->sink = SOURCE;
+    this->inputSize = size;
+
+    this->states.emplace_back();
 }
 
-void SuffixAutomata::add(char letter) {
+int SuffixAutomata::addState() {
+    if (this->states.size() > this->inputSize &&
+            this->states.capacity() == this->states.size()) {
+        this->states.reserve(this->states.capacity() + (this->inputSize / 2));
+    }
+    this->states.emplace_back();
+    return this->states.size() - 1;
+}
+
+void SuffixAutomata::addTransition(int from, int index, int to, bool primary) {
+    this->states[from].next.set(index, to);
+    this->states[from].primary[index] = primary;
+    this->transitionsCount++;
+}
+
+void SuffixAutomata::addLetter(char letter) {
     this->sink = this->update(this->sink, letter);
 }
 
@@ -21,12 +38,12 @@ int SuffixAutomata::update(int currentSink, char letter) {
 
     while (current != SOURCE && suffix == NONE) {
         current = this->states[current].suffixLink;
-        if (this->states[current].next[index] == NONE) {
+        if (this->states[current].next.get(index) == NONE) {
             this->addTransition(current, index, newSink, false);
         } else if (this->states[current].primary[index]) {
-            suffix = this->states[current].next[index];
+            suffix = this->states[current].next.get(index);
         } else {
-            int child = this->states[current].next[index];
+            int child = this->states[current].next.get(index);
             suffix = this->split(current, child, index);
         }
     }
@@ -40,13 +57,19 @@ int SuffixAutomata::update(int currentSink, char letter) {
 int SuffixAutomata::split(int parent, int child, int index) {
     int newChild = this->addState();
 
-    this->states[parent].next[index] = newChild;
+    this->states[parent].next.set(index, newChild);
     this->states[parent].primary[index] = true;
 
-    for (int i = 0; i < ALPHABET_SIZE; i++) {
-        if (this->states[child].next[i] != NONE) {
-            int next = this->states[child].next[i];
-            this->addTransition(newChild, i, next, false);
+    if (this->states[child].next.size == 1) {
+        int i = this->states[child].next.idx;
+        int next = this->states[child].next.get(i);
+        this->addTransition(newChild, i, next, false);
+    } else if (this->states[child].next.size > 1) {
+        for (int i = 0; i < ALPHABET_SIZE; i++) {
+            if (this->states[child].next.get(i) != NONE) {
+                int next = this->states[child].next.get(i);
+                this->addTransition(newChild, i, next, false);
+            }
         }
     }
 
@@ -56,9 +79,9 @@ int SuffixAutomata::split(int parent, int child, int index) {
     int current = parent;
     while (current != SOURCE) {
         current = this->states[current].suffixLink;
-        int a = this->states[current].next.getIndex(child);
+        int a = this->states[current].next.index(child);
         if (a != NONE && !this->states[current].primary[a]) {
-            this->states[current].next[a] = newChild;
+            this->states[current].next.set(a, newChild);
         } else {
             break;
         }
@@ -74,18 +97,4 @@ int SuffixAutomata::getFinalStates() {
         s = this->states[s].suffixLink;
     }
     return count;
-}
-
-int SuffixAutomata::addState() {
-    this->states.emplace_back();
-    if (this->states.capacity() > 70000000 && this->states.size() % 100000 == 0) {
-        this->states.shrink_to_fit();
-    }
-    return this->states.size() - 1;
-}
-
-void SuffixAutomata::addTransition(int from, int index, int to, bool primary) {
-    this->states[from].next[index] = to;
-    this->states[from].primary[index] = primary;
-    this->transitionsCount++;
 }

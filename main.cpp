@@ -1,3 +1,5 @@
+#include <sys/stat.h>
+
 #include <fcntl.h>
 #include <unistd.h>
 #include <cstdio>
@@ -7,9 +9,14 @@
 const unsigned int BUF_SIZE = 1<<20;
 
 SuffixAutomata* construct(char* in) {
-    SuffixAutomata* automata = new SuffixAutomata();
-
     int fileDesc = open(in, O_RDONLY);;
+
+    struct stat buf;
+    fstat(fileDesc, &buf);
+    int size = buf.st_size;
+
+    SuffixAutomata* automata = new SuffixAutomata(size);
+
     if (fileDesc == -1) perror("open");
     ssize_t n = 0;
     char* buffer = new char[BUF_SIZE];
@@ -17,7 +24,7 @@ SuffixAutomata* construct(char* in) {
         n = read(fileDesc, buffer, BUF_SIZE);
         for (int i = 0; i < n; i++) {
             if (buffer[i] == '\n') break;
-            automata->add(buffer[i]);
+            automata->addLetter(buffer[i]);
         }
     } while (n > 0);
     delete[] buffer;

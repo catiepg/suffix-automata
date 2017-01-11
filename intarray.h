@@ -6,13 +6,13 @@ const int DEFAULT = -1;
 template <const int SIZE>
 struct IntArray {
     int* data;
-    int index;
+    int idx;
     int size;
 
     IntArray() {
         this->data = new int[1];
         this->data[0] = DEFAULT;
-        this->index = DEFAULT;
+        this->idx = DEFAULT;
         this->size = 0;
     }
 
@@ -27,7 +27,7 @@ struct IntArray {
             }
         }
 
-        this->index = arr.index;
+        this->idx = arr.idx;
         this->size = arr.size;
     }
 
@@ -35,17 +35,18 @@ struct IntArray {
         delete[] this->data;
     }
 
-    const int operator[](int index) const {
-        if (this->size == 1 && this->index == index) return this->data[0];
+    int get(int index) {
+        if (this->size == 1 && this->idx == index) return this->data[0];
         if (this->size > 1) return this->data[index];
         return DEFAULT;
     }
 
-    int& operator[](const int index) {
+    void set(int index, int value) {
         if (this->size == 0) {
-            this->index = index;
+            this->idx = index;
             this->size = 1;
-            return this->data[0];
+            this->data[0] = value;
+            return;
         }
 
         if (this->size == 1) {
@@ -53,18 +54,18 @@ struct IntArray {
 
             for (int i = 0; i < SIZE; i++) newData[i] = DEFAULT;
 
-            newData[this->index] = this->data[0];
+            newData[this->idx] = this->data[0];
             delete[] this->data;
 
             this->data = newData;
-            this->index = DEFAULT;
+            this->idx = DEFAULT;
         }
 
         this->size++;
-        return this->data[index];
+        this->data[index] = value;
     }
 
-    int getIndex(int value) {
+    int index(int value) {
         if (this->size == 1 && this->data[0] == value) return 0;
         if (this->size > 1) {
             for (int i = 0; i < SIZE; i++) {

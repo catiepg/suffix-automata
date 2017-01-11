@@ -26,16 +26,17 @@ struct SuffixAutomata {
     std::vector<State> states;
     int transitionsCount;
     int sink;
+    int inputSize;
 
-    SuffixAutomata();
-
-    void add(char letter);
-    int update(int currentSink, char letter);
-    int split(int parent, int child, int index);
-    int getFinalStates();
+    SuffixAutomata(int size);
 
     int addState();
     void addTransition(int from, int index, int to, bool primary);
+
+    void addLetter(char letter);
+    int update(int currentSink, char letter);
+    int split(int parent, int child, int index);
+    int getFinalStates();
 };
 
 #endif
